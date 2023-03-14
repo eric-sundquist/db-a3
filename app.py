@@ -6,8 +6,8 @@ class App:
         self.repo = repo
 
     def run(self):
-        # self.main_menu()
-        self.user_menu("kalle")
+        self.main_menu()
+        # self.user_menu("kalle")
 
     def main_menu(self):
         while True:
@@ -16,7 +16,6 @@ class App:
             print("2. New Member Registration")
             print("3. Quit")
             choice = input("Enter your choice: ")
-
             if choice == "1":
                 user = self.login()
                 if user is not None:
@@ -32,8 +31,8 @@ class App:
                 print("Invalid choice. Please try again.")
 
     def user_menu(self, user):
-        books = []
         while True:
+            isbn = None
             print("\nMember Menu!")
             print("1. Browse by Subject")
             print("2. Search by Author/Title")
@@ -42,18 +41,43 @@ class App:
             choice = input("Enter your choice: ")
             if choice == "1":
                 isbn = self.browse_by_subject()
-                if isbn is not None:
-                    books.append(isbn)
-                    print(books)
             elif choice == "2":
-                print("Search by author/title")
+                isbn = self.search_author_title()
             elif choice == "3":
                 print("Checkout")
+                cart = self.repo.get_cart(user[0])
+                for book in cart:
+                    print(book)
             elif choice == "4":
                 print("\nYou have been logged out!")
                 break
             else:
                 print("\nInvalid choice. Please try again.")
+            if isbn is not None:
+                self.repo.add_to_cart(user[0], isbn, self.prompt_qty())
+
+    def search_author_title(self):
+        while True:
+            print("1. Author Search")
+            print("2. Title Search")
+            print("3. Go back to Member Menu")
+            choice = input("Enter your choice: ")
+            if choice == "1":
+                return self.author_search()
+            elif choice == "2":
+                return self.title_search()
+            elif choice == "3":
+                break
+            else:
+                print("\nInvalid choice. Please try again.")
+
+    def author_search(self):
+        # TODO
+        return "isbn"
+
+    def title_search(self):
+        # TODO
+        return "isbn"
 
     def browse_by_subject(self):
         subjects = self.repo.get_subjects()
@@ -97,6 +121,16 @@ class App:
                     break
         return isbn
 
+    def prompt_qty(self):
+        while True:
+            try:
+                value = int(input("Enter quantity: "))
+                if 1 <= value:
+                    return value
+                print("The quantity must be 1 or above.")
+            except ValueError:
+                print("Invalid input, please enter an integer.")
+
     def print_book(self, book):
         print("\nAuthor: " + book[2])
         print("Title: " + book[1])
@@ -122,10 +156,8 @@ class App:
             except ValueError:
                 print("Input must be an integer")
                 continue
-
             if 1 <= index <= len(subjects):
                 break
-
             print("Input must be between 1 and " + str(len(subjects)) + "!")
         return subjects[int(index) - 1]
 

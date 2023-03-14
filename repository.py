@@ -52,10 +52,32 @@ class Repository:
             return None
 
     def get_books_by_subject(self, subject):
-        print(subject)
         try:
             query = "SELECT * FROM Books WHERE subject = %s"
             self.cursor.execute(query, subject)
+            return self.cursor.fetchall()
+        except Error as error:
+            # TODO korrekt error blabla
+            print(error)
+            return None
+
+    def add_to_cart(self, user_id, isbn, qty):
+        query = "INSERT INTO Cart (userid, isbn, qty) VALUES (%s, %s, %s)"
+        val = (user_id, isbn, qty)
+        try:
+            self.cursor.execute(query, val)
+            self.connection.commit()
+            return None
+        except Error as error:
+            # TODO korrekt error blabla
+            print(error)
+            return None
+
+    def get_cart(self, user_id):
+        query = "SELECT * FROM Cart WHERE userid = %s"
+        val = (user_id,)
+        try:
+            self.cursor.execute(query, val)
             return self.cursor.fetchall()
         except Error as error:
             # TODO korrekt error blabla
