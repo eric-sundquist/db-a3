@@ -1,7 +1,6 @@
 from repository import Repository
 from app import App
 
-
 try:
     rep = Repository()
     app = App(rep)

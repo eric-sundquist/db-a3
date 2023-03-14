@@ -10,9 +10,6 @@ class App:
         self.user_menu("kalle")
 
     def main_menu(self):
-        """
-        Displays the main menu and prompts the user to select an option.
-        """
         while True:
             print("\nWelcome to the Book Store!")
             print("1. Member Login")
@@ -43,7 +40,6 @@ class App:
             print("3. Checkout")
             print("4. Logout")
             choice = input("Enter your choice: ")
-
             if choice == "1":
                 isbn = self.browse_by_subject()
                 if isbn is not None:
@@ -54,45 +50,51 @@ class App:
             elif choice == "3":
                 print("Checkout")
             elif choice == "4":
-                print("You have been logged out!")
+                print("\nYou have been logged out!")
                 break
             else:
-                print("Invalid choice. Please try again.")
+                print("\nInvalid choice. Please try again.")
 
     def browse_by_subject(self):
         subjects = self.repo.get_subjects()
         if subjects is None:
-            raise RuntimeError("There was an Error getting the subjects")
+            raise RuntimeError("\nThere was an Error getting the subjects")
         if len(subjects) == 0:
-            print("There are no book subjects")
-
+            print("\nThere are no book subjects")
         subject = self.prompt_subject(subjects)
         return self.promt_book(subject)  # return isbn number as string
 
     def promt_book(self, subject):
         books = self.repo.get_books_by_subject(subject)
         if books is None:
-            raise RuntimeError("There was an Error getting the books")
+            raise RuntimeError("\nThere was an Error getting the books")
         if len(books) == 0:
-            print("There are no books on this subject")
+            print("\nThere are no books on this subject")
             return None
         print("\nChoose book:")
         print(str(len(books)) + " books available on this subject")
         isbn = None
         for i, book in enumerate(books, start=1):
             self.print_book(book)
-            # if i % 2 == 0 or i == len(books):
-            #     choice = input(
-            #         "\nEnter ISBN to add to Cart or \nn Enter to browse or \nEnter to go back to menu: "
-            #     )
-            #     if choice == "":
-            #         break
-            #     if choice == "n":
-            #         continue
-            #     if self.is_choice_valid_isbn(choice, books):
-            #         isbn = choice
-            #     else:
-            #         print("Invalid choice. Please try again.")
+            if i % 2 == 0 or i == len(books):
+                exit_loop = False
+                while True:
+                    choice = input(
+                        "\nEnter ISBN to add to Cart or \nn Enter to browse or \nEnter to go back to menu: "
+                    )
+                    if choice == "":
+                        exit_loop = True
+                        break
+                    if choice == "n":
+                        break
+                    if self.is_choice_valid_isbn(choice, books):
+                        isbn = choice
+                        exit_loop = True
+                        break
+
+                    print("\nInvalid choice. Please try again.")
+                if exit_loop:
+                    break
         return isbn
 
     def print_book(self, book):
@@ -113,9 +115,18 @@ class App:
         print("\nChoose subject:")
         for i, subject in enumerate(subjects, start=1):
             print(str(i) + ". " + subject[0])
+        index = None
+        while True:
+            try:
+                index = int(input("Enter index of subject: "))
+            except ValueError:
+                print("Input must be an integer")
+                continue
 
-        index = input("Enter index of subject: ")
-        print()
+            if 1 <= index <= len(subjects):
+                break
+
+            print("Input must be between 1 and " + str(len(subjects)) + "!")
         return subjects[int(index) - 1]
 
     def create_member(self):
