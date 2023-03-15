@@ -6,8 +6,6 @@ try:
     app = App(rep)
     app.run()
 except Exception as error:
-    print("There was an Error")
-    print(error)
-    print(error.with_traceback)
+    print(f"Error: {error}")
 finally:
     rep.close_connection()

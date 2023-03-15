@@ -1,4 +1,5 @@
-from mysql.connector import connect, Error
+from mysql.connector import connect, Error, IntegrityError
+import bcrypt
 
 
 class Repository:
@@ -9,10 +10,10 @@ class Repository:
     def init_connection(self):
         try:
             connection = connect(
-                host="localhost",
+                host="localhost",  # TODO CONFIG
                 database="book_store",
                 user="root",
-                password="zorro1217",
+                password="<password>",
             )
             return connection
         except Error as error:
@@ -23,22 +24,34 @@ class Repository:
         self.cursor.close()
         self.connection.close()
 
-    def store_member(self, val):
+    def store_member(self, user_data, password):
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        val = user_data + (hashed_password,)
         try:
             query = "INSERT INTO Members (fname, lname, adress, city, state, zip, phone, email, password) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
             self.cursor.execute(query, val)
             self.connection.commit()
             print("You have registrered successfully!")
+        except IntegrityError:
+            print("Email already exists, try another email")
         except Error as error:
-            # TODO korrekt error om email är dublikerad
-            print(error)
+            print(f"Error: {error}")
 
-    def get_user(self, val):
+    def get_user(self, email, password):
         try:
-            query = "SELECT * FROM Members WHERE email = %s AND password = %s"
+            val = (email,)
+            query = "SELECT * FROM Members WHERE email = %s"
             self.cursor.execute(query, val)
-            return self.cursor.fetchone()
-        except Error:
+            user = self.cursor.fetchone()
+            if user is not None:
+                hashed_password = user[9]
+                if bcrypt.checkpw(
+                    password.encode("utf-8"), hashed_password.encode("utf-8")
+                ):
+                    return user
+            return None
+        except Error as error:
+            print(f"Error: {error}")
             return None
 
     def get_subjects(self):
@@ -47,8 +60,7 @@ class Repository:
             self.cursor.execute(query)
             return self.cursor.fetchall()
         except Error as error:
-            # TODO korrekt error om email är dublikerad
-            print(error)
+            print(f"Error: {error}")
             return None
 
     def get_books_by_subject(self, subject):
@@ -57,8 +69,7 @@ class Repository:
             self.cursor.execute(query, subject)
             return self.cursor.fetchall()
         except Error as error:
-            # TODO korrekt error blabla
-            print(error)
+            print(f"Error: {error}")
             return None
 
     def add_to_cart(self, user_id, isbn, qty):
@@ -69,8 +80,7 @@ class Repository:
             self.connection.commit()
             return None
         except Error as error:
-            # TODO korrekt error blabla
-            print(error)
+            print(f"Error: {error}")
             return None
 
     def get_cart(self, user_id):
@@ -80,8 +90,7 @@ class Repository:
             self.cursor.execute(query, val)
             return self.cursor.fetchall()
         except Error as error:
-            # TODO korrekt error blabla
-            print(error)
+            print(f"Error: {error}")
             return None
 
     def search_by(self, search_by, sub_str):
@@ -94,8 +103,7 @@ class Repository:
             self.cursor.execute(query, val)
             return self.cursor.fetchall()
         except Error as error:
-            # TODO korrekt error blabla
-            print(error)
+            print(f"Error: {error}")
             return None
 
     def create_order(self, user, received):
@@ -107,8 +115,7 @@ class Repository:
             self.connection.commit()
             return order_no
         except Error as error:
-            # TODO korrekt error blabla
-            print(error)
+            print(f"Error: {error}")
             return None
 
     def create_order_detail(self, ono, isbn, qty, price):
@@ -121,8 +128,7 @@ class Repository:
             self.connection.commit()
             return None
         except Error as error:
-            # TODO korrekt error blabla
-            print(error)
+            print(f"Error: {error}")
             return None
 
     def delete_cart(self, userid):
@@ -133,6 +139,5 @@ class Repository:
             self.connection.commit()
             return None
         except Error as error:
-            # TODO korrekt error blabla
-            print(error)
+            print(f"Error: {error}")
             return None

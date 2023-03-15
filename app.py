@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from getpass import getpass
+import re
 
 
 class App:
@@ -81,6 +82,7 @@ class App:
         print("\nOrder Details:")
         self.print_order_details(order_no, date, user)
         self.print_cart(cart)
+        input("\nPress ENTER to go back to Menu")
 
     def print_order_details(self, order_no, date, user):
         print("Invoice for order no." + str(order_no))
@@ -90,9 +92,9 @@ class App:
         print("City: " + user[4])
         print("State: " + user[5])
         print("Zip: " + str(user[6]))
-        d1 = datetime.strptime(date, "%Y-%m-%d")
-        d2 = d1 + timedelta(days=7)
-        print("\n Estimated delivery: " + d2.strftime("%Y-%m-%d"))
+        recieved_date = datetime.strptime(date, "%Y-%m-%d")
+        estimate_date = recieved_date + timedelta(days=7)
+        print("\n Estimated delivery: " + estimate_date.strftime("%Y-%m-%d"))
 
     def print_cart(self, cart):
         tot_price = 0
@@ -122,24 +124,26 @@ class App:
 
     def author_search(self):
         user_input = self.prompt_string_input(
-            "Enter name of the Author or part of the name: "
+            "Enter name of the Author or part of the name: ", 1
         ).strip()
         books = self.repo.search_by("author", user_input)
         return self.print_books_prompt_isbn(books, 3)
 
     def title_search(self):
         user_input = self.prompt_string_input(
-            "Enter Title or part of the Title: "
+            "Enter Title or part of the Title: ", 1
         ).strip()
         books = self.repo.search_by("title", user_input)
         return self.print_books_prompt_isbn(books, 3)
 
-    def prompt_string_input(self, prompt):
+    def prompt_string_input(self, prompt, min_length):
         while True:
             user_input = input(prompt)
-            if len(user_input) <= 255:
+            if min_length <= len(user_input) <= 255:
                 return user_input
-            print("Invalid input. Please try again.")
+            print(
+                f"Invalid input. String must be between {min_length} and 255 characters. Please try again."
+            )
 
     # Use the user_input variable here
 
@@ -227,23 +231,36 @@ class App:
 
     def create_member(self):
         print("\nNew Member Registration")
-        fname = input("Enter first name: ")
-        lname = input("Enter last name: ")
-        adress = input("Enter street adress: ")
-        city = input("Enter city: ")
-        state = input("Enter state: ")
-        zipnr = input("Enter zip: ")
-        phone = input("Enter phone: ")
-        # TODO Validera som giltig adress?
-        email = input("Enter email: ")
+        fname = self.prompt_string_input("Enter first name: ", 2)
+        lname = self.prompt_string_input("Enter last name: ", 2)
+        adress = self.prompt_string_input("Enter street adress: ", 3)
+        city = self.prompt_string_input("Enter city: ", 2)
+        state = self.prompt_string_input("Enter state: ", 1)
+        zipnr = self.prompt_string_input("Enter zip: ", 4)
+        phone = self.prompt_string_input("Enter phone: ", 6)
+        email = self.get_email()
         password = getpass("Enter password: ")
 
         self.repo.store_member(
-            (fname, lname, adress, city, state, zipnr, phone, email, password)
+            (fname, lname, adress, city, state, zipnr, phone, email), password
         )
+
+    def get_email(self):
+        while True:
+            email = input("Enter email: ")
+            if self.is_valid_email(email):
+                return email
+            print("Email is invalid, please enter the valid email")
+
+    def is_valid_email(self, email):
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if re.match(pattern, email):
+            return True
+        return False
 
     def login(self):
         print("\nLogin in to your account")
         email = input("Email: ")
         password = getpass("Password: ")
-        return self.repo.get_user((email, password))
+        user = self.repo.get_user(email, password)
+        return user
