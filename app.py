@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from getpass import getpass
 
 
@@ -7,7 +8,6 @@ class App:
 
     def run(self):
         self.main_menu()
-        # self.user_menu("kalle")
 
     def main_menu(self):
         while True:
@@ -44,10 +44,7 @@ class App:
             elif choice == "2":
                 isbn = self.search_author_title()
             elif choice == "3":
-                print("Checkout")
-                cart = self.repo.get_cart(user[0])
-                for book in cart:
-                    print(book)
+                self.cart(user)
             elif choice == "4":
                 print("\nYou have been logged out!")
                 break
@@ -55,6 +52,59 @@ class App:
                 print("\nInvalid choice. Please try again.")
             if isbn is not None:
                 self.repo.add_to_cart(user[0], isbn, self.prompt_qty())
+
+    def cart(self, user):
+        cart = self.repo.get_cart(user[0])
+        print("\nCheckout")
+        if len(cart) == 0:
+            print("\nThe cart is empty!")
+            return None
+        print("\nCurrent Cart Contents: ")
+        self.print_cart(cart)
+        while True:
+            action = input("\nProceed to check out? (Y/N): ").lower()
+            if action == "y":
+                self.checkout(user, cart)
+                break
+            if action == "n":
+                break
+            print("Invalid input. Try again.")
+
+    def checkout(self, user, cart):
+        date = datetime.now().strftime("%Y-%m-%d")
+        order_no = self.repo.create_order(user, date)
+        for book in cart:
+            self.repo.create_order_detail(
+                order_no, book[0], book[3], round(book[2] * book[3], 2)
+            )
+        self.repo.delete_cart(user[0])
+        print("\nOrder Details:")
+        self.print_order_details(order_no, date, user)
+        self.print_cart(cart)
+
+    def print_order_details(self, order_no, date, user):
+        print("Invoice for order no." + str(order_no))
+        print("\nShipping adress")
+        print("Name: " + user[1] + " " + user[2])
+        print("Adress: " + user[3])
+        print("City: " + user[4])
+        print("State: " + user[5])
+        print("Zip: " + str(user[6]))
+        d1 = datetime.strptime(date, "%Y-%m-%d")
+        d2 = d1 + timedelta(days=7)
+        print("\n Estimated delivery: " + d2.strftime("%Y-%m-%d"))
+
+    def print_cart(self, cart):
+        tot_price = 0
+        for book in cart:
+            print("\nISBN: " + book[0])
+            print("Title: " + book[1])
+            print("Price: $" + str(book[2]))
+            print("Quantity: " + str(book[3]))
+            price = book[2] * book[3]
+            tot_price += price
+            print("Total price: $" + str(round(price, 2)))
+        print("\nTotal price of all books: $" + str(round(tot_price, 2)))
 
     def search_author_title(self):
         while True:

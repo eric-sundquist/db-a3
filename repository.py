@@ -74,7 +74,7 @@ class Repository:
             return None
 
     def get_cart(self, user_id):
-        query = "SELECT * FROM Cart WHERE userid = %s"
+        query = "SELECT b.isbn, b.title, b.price, c.qty FROM Cart c JOIN Books b ON c.isbn = b.isbn WHERE c.userid =  %s"
         val = (user_id,)
         try:
             self.cursor.execute(query, val)
@@ -93,6 +93,45 @@ class Repository:
         try:
             self.cursor.execute(query, val)
             return self.cursor.fetchall()
+        except Error as error:
+            # TODO korrekt error blabla
+            print(error)
+            return None
+
+    def create_order(self, user, received):
+        query = "INSERT INTO Orders (userid, received, shipAdress, shipCity, shipState, shipZip) VALUES (%s, %s, %s, %s, %s, %s)"
+        val = (user[0], received, user[3], user[4], user[5], user[6])
+        try:
+            self.cursor.execute(query, val)
+            order_no = self.cursor.lastrowid
+            self.connection.commit()
+            return order_no
+        except Error as error:
+            # TODO korrekt error blabla
+            print(error)
+            return None
+
+    def create_order_detail(self, ono, isbn, qty, price):
+        query = (
+            "INSERT INTO OrderDetails (ono, isbn, qty, price) VALUES (%s, %s, %s, %s)"
+        )
+        val = (ono, isbn, qty, price)
+        try:
+            self.cursor.execute(query, val)
+            self.connection.commit()
+            return None
+        except Error as error:
+            # TODO korrekt error blabla
+            print(error)
+            return None
+
+    def delete_cart(self, userid):
+        query = "DELETE FROM Cart WHERE userid = %s"
+        val = (userid,)
+        try:
+            self.cursor.execute(query, val)
+            self.connection.commit()
+            return None
         except Error as error:
             # TODO korrekt error blabla
             print(error)
