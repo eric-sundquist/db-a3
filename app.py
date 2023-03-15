@@ -58,26 +58,40 @@ class App:
 
     def search_author_title(self):
         while True:
-            print("1. Author Search")
+            print("\n1. Author Search")
             print("2. Title Search")
             print("3. Go back to Member Menu")
             choice = input("Enter your choice: ")
             if choice == "1":
                 return self.author_search()
-            elif choice == "2":
+            if choice == "2":
                 return self.title_search()
-            elif choice == "3":
-                break
-            else:
-                print("\nInvalid choice. Please try again.")
+            if choice == "3":
+                return None
+            print("\nInvalid choice. Please try again.")
 
     def author_search(self):
-        # TODO
-        return "isbn"
+        user_input = self.prompt_string_input(
+            "Enter name of the Author or part of the name: "
+        ).strip()
+        books = self.repo.search_by("author", user_input)
+        return self.print_books_prompt_isbn(books, 3)
 
     def title_search(self):
-        # TODO
-        return "isbn"
+        user_input = self.prompt_string_input(
+            "Enter Title or part of the Title: "
+        ).strip()
+        books = self.repo.search_by("title", user_input)
+        return self.print_books_prompt_isbn(books, 3)
+
+    def prompt_string_input(self, prompt):
+        while True:
+            user_input = input(prompt)
+            if len(user_input) <= 255:
+                return user_input
+            print("Invalid input. Please try again.")
+
+    # Use the user_input variable here
 
     def browse_by_subject(self):
         subjects = self.repo.get_subjects()
@@ -86,40 +100,40 @@ class App:
         if len(subjects) == 0:
             print("\nThere are no book subjects")
         subject = self.prompt_subject(subjects)
-        return self.promt_book(subject)  # return isbn number as string
+        return self.get_isbn_by_subj(subject)  # return isbn number as string
 
-    def promt_book(self, subject):
+    def get_isbn_by_subj(self, subject):
         books = self.repo.get_books_by_subject(subject)
         if books is None:
             raise RuntimeError("\nThere was an Error getting the books")
         if len(books) == 0:
             print("\nThere are no books on this subject")
             return None
-        print("\nChoose book:")
-        print(str(len(books)) + " books available on this subject")
-        isbn = None
+        return self.print_books_prompt_isbn(books, 2)
+
+    def print_books_prompt_isbn(self, books, nr_books_display):
+        amount_books = len(books)
+        if amount_books == 0:
+            print("\nNo books where found")
+        elif amount_books == 1:
+            print("\n1 book found.")
+        else:
+            print("\n" + str(len(books)) + " books found")
         for i, book in enumerate(books, start=1):
             self.print_book(book)
-            if i % 2 == 0 or i == len(books):
-                exit_loop = False
+            if i % nr_books_display == 0 or i == len(books):
                 while True:
                     choice = input(
                         "\nEnter ISBN to add to Cart or \nn Enter to browse or \nEnter to go back to menu: "
                     )
                     if choice == "":
-                        exit_loop = True
-                        break
+                        return None
                     if choice == "n":
                         break
                     if self.is_choice_valid_isbn(choice, books):
-                        isbn = choice
-                        exit_loop = True
-                        break
-
+                        return choice
                     print("\nInvalid choice. Please try again.")
-                if exit_loop:
-                    break
-        return isbn
+        return None
 
     def prompt_qty(self):
         while True:
@@ -132,8 +146,8 @@ class App:
                 print("Invalid input, please enter an integer.")
 
     def print_book(self, book):
-        print("\nAuthor: " + book[2])
-        print("Title: " + book[1])
+        print("\nAuthor: " + book[1])
+        print("Title: " + book[2])
         print("ISBN: " + book[0])
         print("PRICE: " + str(book[3]))
         print("Subject: " + book[4])
